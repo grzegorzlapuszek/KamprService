@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using Persistance;
+using Persistence;
 
 namespace Application.Activities
 {
@@ -24,16 +24,13 @@ namespace Application.Activities
             public async Task<Unit> Handle(Command request, CancellationToken cancellationToken)
             {
                 var activity = await _context.Activities.FindAsync(request.Id);
-                if(activity == null)
-                {
-                    throw new Exception("Could find activity");
-                }
-                _context.Activities.Remove(activity);
 
-                var success = await _context.SaveChangesAsync();
-                return Unit.Value;  //TODO: always return Unit.Value -> exception check needs to be done
+                _context.Remove(activity);
+
+                await _context.SaveChangesAsync();
+
+                return Unit.Value;
             }
         }
     }
-
 }

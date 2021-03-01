@@ -1,10 +1,9 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
 using Domain;
 using MediatR;
-using Microsoft.Extensions.Logging;
-using Persistance;
+using Persistence;
 
 namespace Application.Activities
 {
@@ -12,46 +11,29 @@ namespace Application.Activities
     {
         public class Command : IRequest
         {
-            public Guid Id { get; set; }
-            public string Title { get; set; }
-            public string Description { get; set; }
-            public string Category { get; set; }
-            public DateTime? Date { get; set; }
-            public string City { get; set; }
-            public string Venue { get; set; }
+            public Activity Activity { get; set; }
         }
 
         public class Handler : IRequestHandler<Command>
         {
             private readonly DataContext _context;
-            private readonly ILogger<Edit> _logger;
-            public Handler(DataContext context, ILogger<Edit> logger)
+            private readonly IMapper _mapper;
+            public Handler(DataContext context, IMapper mapper)
             {
-                this._logger = logger;
-                this._context = context;
+                _mapper = mapper;
+                _context = context;
             }
 
             public async Task<Unit> Handle(Command request, CancellationToken cancellationToken)
             {
-                var activity = await _context.Activities.FindAsync(request.Id);
+                var activity = await _context.Activities.FindAsync(request.Activity.Id);
 
-                if (activity == null)
-                {
-                    throw new Exception("Activity doesnt exist in the database");
-                }
-                activity.Title = request.Title ?? activity.Title;
-                activity.Description = request.Description ?? activity.Description;
-                activity.Category = request.Category ?? activity.Category;
-                activity.Date = request.Date ?? activity.Date;
-                activity.City = request.City ?? activity.City;
-                activity.Venue = request.Venue ?? activity.Venue;
+                _mapper.Map(request.Activity, activity);
 
-                var success = await _context.SaveChangesAsync();
-                return Unit.Value;  //TODO: always return Unit.Value -> exception check needs to be done
+                await _context.SaveChangesAsync();
+
+                return Unit.Value;
             }
         }
-
     }
 }
-
-
